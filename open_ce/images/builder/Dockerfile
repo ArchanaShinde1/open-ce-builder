@@ -12,7 +12,8 @@ ENV BUILD_USER=builder
 ARG BUILD_ID=1084
 
 RUN export ARCH="$(uname -m)" && \
-    yum repolist && yum install -y rsync openssh-clients diffutils procps binutils git-lfs glibc-devel file psmisc libxcrypt-compat openssl-devel && \
+    yum repolist && \
+    yum install -y rsync openssh-clients diffutils procps git-lfs gcc-toolset-12 glibc-devel file libxcrypt-compat psmisc libX11-devel openssl openssl-libs openssl-devel && \
     # Create CICD Group
     groupadd --non-unique --gid ${GROUP_ID} ${CICD_GROUP} && \
     # Adduser Builder
@@ -28,17 +29,27 @@ RUN export ARCH="$(uname -m)" && \
     $CONDA_HOME/bin/conda config --system --set always_yes true && \
     $CONDA_HOME/bin/conda config --system --set auto_update_conda false && \
     $CONDA_HOME/bin/conda config --system --set notify_outdated_conda false && \
+    $CONDA_HOME/bin/conda config --system --add create_default_packages openssl=${OPENSSL_VER} && \
     $CONDA_HOME/bin/conda --version && \
     mkdir -p $CONDA_HOME/conda-bld && \
     mkdir -p $HOME/.cache && \
     echo "export PYTHONPATH=${PYTHONPATH}:$HOME/open_ce" >> ${HOME}/.bashrc && \
+    export PATH="/opt/rh/gcc-toolset-12/root/usr/bin:${PATH}" && \
+    export GCC_HOME="/opt/rh/gcc-toolset-12/root/usr" && \
+    echo "PATH="${PATH}"" >> ${HOME}/.profile && \
+    echo "PATH="${PATH}"" >> ${HOME}/.bashrc && \
+    echo "GCC_HOME="${GCC_HOME}"" >> ${HOME}/.bashrc && \
     chown -R ${BUILD_USER}:${CICD_GROUP} ${CONDA_HOME} && \
     git config --global http.version HTTP/1.1 && \
     git config --global http.postBuffer 157286400
 
+
 USER ${BUILD_USER}
-RUN export PATH="${PATH}" && \
+RUN export PATH="/opt/rh/gcc-toolset-12/root/usr/bin:${PATH}" && \
+    export GCC_HOME="/opt/rh/gcc-toolset-12/root/usr" && \
     echo "PATH="${PATH}"" >> ${HOME}/.profile && \
+    echo "PATH="${PATH}"" >> ${HOME}/.bashrc && \
+    echo "GCC_HOME="${GCC_HOME}"" >> ${HOME}/.bashrc && \
     mkdir -p $HOME/.cache && \
     echo ". $CONDA_HOME/etc/profile.d/conda.sh" >> ${HOME}/.bashrc && \
     echo "export PYTHONPATH=${PYTHONPATH}:$HOME/open_ce" >> ${HOME}/.bashrc && \
